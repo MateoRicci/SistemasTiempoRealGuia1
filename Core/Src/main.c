@@ -67,33 +67,30 @@ void SystemClock_Config(void);
   * @retval int
   */
 
-void vToggleP12(){
-	while(1){
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-		HAL_Delay(200);
+typedef struct {
+    uint16_t led_pin;     // Parámetro 1
+    uint32_t delay_ms;    // Parámetro 2
+} TaskParams_t;
+
+void vTareaParpadeo(void * pvParameters){
+	// 1. Convertimos el puntero genérico al tipo de nuestra estructura
+	TaskParams_t *params = (TaskParams_t *) pvParameters;
+
+	// 2. Extraemos los valores
+	uint16_t pin = params->led_pin;
+	uint32_t delay = params->delay_ms;
+
+	while(1)
+	{
+		HAL_GPIO_TogglePin(GPIOD, pin);
+		vTaskDelay(pdMS_TO_TICKS(delay));
 	}
 }
 
-void vToggleP13(){
-	while(1){
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-		HAL_Delay(400);
-	}
-}
-
-void vToggleP14(){
-	while(1){
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-		HAL_Delay(600);
-	}
-}
-
-void vToggleP15(){
-	while(1){
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-		HAL_Delay(800);
-	}
-}
+static TaskParams_t params1 = { GPIO_PIN_12, 200 };
+static TaskParams_t params2 = { GPIO_PIN_13, 400 };
+static TaskParams_t params3 = { GPIO_PIN_14, 600 };
+static TaskParams_t params4 = { GPIO_PIN_15, 800 };
 
 int main(void)
 {
@@ -130,10 +127,12 @@ int main(void)
 
   /* Start scheduler */
 //  osKernelStart();
-  xTaskCreate(vToggleP12 , "Toggle pin 12", 100, NULL, 1, NULL );
-  xTaskCreate(vToggleP13 , "Toggle pin 12", 100, NULL, 1, NULL );
-  xTaskCreate(vToggleP14 , "Toggle pin 12", 100, NULL, 1, NULL );
-  xTaskCreate(vToggleP15 , "Toggle pin 12", 100, NULL, 1, NULL );
+
+  xTaskCreate(vTareaParpadeo, "parpadeo p12", 100, (void*)&params1, 1, NULL);
+  xTaskCreate(vTareaParpadeo, "parpadeo p13", 100, (void*)&params2, 1, NULL);
+  xTaskCreate(vTareaParpadeo, "parpadeo p14", 100, (void*)&params3, 1, NULL);
+  xTaskCreate(vTareaParpadeo, "parpadeo p15", 100, (void*)&params4, 1, NULL);
+
   vTaskStartScheduler();
 
   /* We should never get here as control is now taken by the scheduler */
@@ -220,6 +219,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
+
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
