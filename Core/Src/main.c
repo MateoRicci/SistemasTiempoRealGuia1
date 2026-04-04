@@ -67,24 +67,25 @@ void SystemClock_Config(void);
   * @retval int
   */
 
-static uint16_t pVal = 0;
+//static uint16_t pVal = 0;
 
 void vTareaBoton(){
 	while(1)
 	{
 		if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
 		{
-		    if(pVal == 0){
-		    	pVal = 1;
+		    if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_12) != GPIO_PIN_SET){
+//		    	pVal = 1;
 		    	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 		    }
 		} else{
-			if(pVal == 1){
-				pVal = 0;
+			if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_12) == GPIO_PIN_SET){
+//				pVal = 0;
 				HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 			}
 		}
-		vTaskDelay(pdMS_TO_TICKS(1500));
+//		vTaskDelay(pdMS_TO_TICKS(1500));
+		vTaskDelay(pdMS_TO_TICKS(5));
 	}
 }
 
