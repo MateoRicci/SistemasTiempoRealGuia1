@@ -67,30 +67,34 @@ void SystemClock_Config(void);
   * @retval int
   */
 
-typedef struct {
-    uint16_t led_pin;     // Parámetro 1
-    uint32_t delay_ms;    // Parámetro 2
-} TaskParams_t;
+static uint16_t pVal = 0;
 
-void vTareaParpadeo(void * pvParameters){
-	// 1. Convertimos el puntero genérico al tipo de nuestra estructura
-	TaskParams_t *params = (TaskParams_t *) pvParameters;
-
-	// 2. Extraemos los valores
-	uint16_t pin = params->led_pin;
-	uint32_t delay = params->delay_ms;
-
+void vTareaBoton(){
 	while(1)
 	{
-		HAL_GPIO_TogglePin(GPIOD, pin);
-		vTaskDelay(pdMS_TO_TICKS(delay));
+		if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET)
+		{
+		    if(pVal == 0){
+		    	pVal = 1;
+		    	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+		    }
+		} else{
+			if(pVal == 1){
+				pVal = 0;
+				HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+			}
+		}
+		vTaskDelay(pdMS_TO_TICKS(1500));
 	}
 }
 
-static TaskParams_t params1 = { GPIO_PIN_12, 200 };
-static TaskParams_t params2 = { GPIO_PIN_13, 400 };
-static TaskParams_t params3 = { GPIO_PIN_14, 600 };
-static TaskParams_t params4 = { GPIO_PIN_15, 800 };
+void vParpadea(){
+	while(1){
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+		vTaskDelay(pdMS_TO_TICKS(500));
+	}
+}
+
 
 int main(void)
 {
@@ -128,10 +132,8 @@ int main(void)
   /* Start scheduler */
 //  osKernelStart();
 
-  xTaskCreate(vTareaParpadeo, "parpadeo p12", 100, (void*)&params1, 1, NULL);
-  xTaskCreate(vTareaParpadeo, "parpadeo p13", 100, (void*)&params2, 1, NULL);
-  xTaskCreate(vTareaParpadeo, "parpadeo p14", 100, (void*)&params3, 1, NULL);
-  xTaskCreate(vTareaParpadeo, "parpadeo p15", 100, (void*)&params4, 1, NULL);
+  xTaskCreate(vTareaBoton, "tarea boton", 100, NULL, 2, NULL);
+  xTaskCreate(vParpadea, "PARPADEA", 100, NULL, 1, NULL);
 
   vTaskStartScheduler();
 
