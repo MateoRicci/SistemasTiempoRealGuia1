@@ -70,23 +70,24 @@ void SystemClock_Config(void);
 
 TaskHandle_t xTareaA_Handle = NULL;
 TaskHandle_t xTareaB_Handle = NULL;
+int checker = 0;
 
+void vAumentaPrioridad(void *pvParameters)
+{
+	UBaseType_t prioridadB = uxTaskPriorityGet(xTareaB_Handle);
+	vTaskPrioritySet(xTareaA_Handle, prioridadB + 1);
+	checker = 1;
+	vTaskDelay(pdMS_TO_TICKS(3000));
+	vTaskPrioritySet(xTareaA_Handle, prioridadB);
+	checker = 0;
+	vTaskDelete(NULL);
+}
 
 void vTareaA(void *pvParameters) {
     while(1) {
         HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-
-
-        if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET) {
-            UBaseType_t prioridadB = uxTaskPriorityGet(xTareaB_Handle);
-            vTaskPrioritySet(NULL, prioridadB + 1);
-
-            HAL_Delay(3000);
-
-            vTaskPrioritySet(NULL, prioridadB);
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(300));
+        HAL_Delay(300);
+//        vTaskDelay(pdMS_TO_TICKS(300));
     }
 }
 
@@ -94,8 +95,20 @@ void vTareaA(void *pvParameters) {
 void vTareaB(void *pvParameters) {
     while(1) {
         HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-        vTaskDelay(pdMS_TO_TICKS(300));
+        HAL_Delay(300);
+//        vTaskDelay(pdMS_TO_TICKS(300));
     }
+}
+
+void vTareaPulsador(void *pvParameters){
+	while(1)
+	{
+		if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET && checker == 0) {
+			UBaseType_t prioridadB = uxTaskPriorityGet(xTareaB_Handle);
+			xTaskCreate(vAumentaPrioridad, "aumentador de prio", 100, NULL,prioridadB + 1 , NULL);
+		 }
+	}
+	vTaskDelay(pdMS_TO_TICKS(5));
 }
 
 int main(void)
@@ -136,6 +149,7 @@ int main(void)
 
   xTaskCreate(vTareaA, "tarea a", 100, NULL, 1, &xTareaA_Handle);
   xTaskCreate(vTareaB, "tarea b", 100, NULL, 1, &xTareaB_Handle);
+  xTaskCreate(vTareaPulsador, "loop pulsador", 100, NULL, 1, NULL);
 
   vTaskStartScheduler();
 
