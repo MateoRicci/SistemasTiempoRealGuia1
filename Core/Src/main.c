@@ -76,8 +76,8 @@ void vTaskA(void *pvParameters){
 }
 
 void vTaskB(void *pvParameters){
-	TickType_t xLastWakeTime = xTaskGetTickCount();
 	while(1){
+		TickType_t xLastWakeTime = xTaskGetTickCount();
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
 		HAL_Delay(100);
 		vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(500));
