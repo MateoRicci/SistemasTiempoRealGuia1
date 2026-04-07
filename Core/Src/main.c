@@ -67,23 +67,36 @@ void SystemClock_Config(void);
   * @retval int
   */
 
-void vTaskA(void *pvParameters){
-	while(1){
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-		HAL_Delay(100);
-		vTaskDelay(pdMS_TO_TICKS(400));
-	}
+
+TaskHandle_t xTareaA_Handle = NULL;
+TaskHandle_t xTareaB_Handle = NULL;
+
+
+void vTareaA(void *pvParameters) {
+    while(1) {
+        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+
+
+        if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET) {
+            UBaseType_t prioridadB = uxTaskPriorityGet(xTareaB_Handle);
+            vTaskPrioritySet(NULL, prioridadB + 1);
+
+            HAL_Delay(3000);
+
+            vTaskPrioritySet(NULL, prioridadB);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(300));
+    }
 }
 
-void vTaskB(void *pvParameters){
-	TickType_t xLastWakeTime = xTaskGetTickCount();
-	while(1){
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-		HAL_Delay(100);
-		vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(500));
-	}
-}
 
+void vTareaB(void *pvParameters) {
+    while(1) {
+        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+        vTaskDelay(pdMS_TO_TICKS(300));
+    }
+}
 
 int main(void)
 {
@@ -121,8 +134,8 @@ int main(void)
   /* Start scheduler */
 //  osKernelStart();
 
-  xTaskCreate(vTaskA, "vTaskA", 100, NULL, 1, NULL);
-  xTaskCreate(vTaskB, "vTaskB", 100, NULL, 1, NULL);
+  xTaskCreate(vTareaA, "tarea a", 100, NULL, 1, &xTareaA_Handle);
+  xTaskCreate(vTareaB, "tarea b", 100, NULL, 1, &xTareaB_Handle);
 
   vTaskStartScheduler();
 
