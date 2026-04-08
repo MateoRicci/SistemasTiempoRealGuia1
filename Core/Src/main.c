@@ -21,8 +21,8 @@
 //#include "cmsis_os.h"
 #include "FreeRTOS.h"
 #include "task.h"
-
 #include "gpio.h"
+#include "semphr.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -60,57 +60,38 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+SemaphoreHandle_t xSemaforoBoton; // Variable global
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if(GPIO_Pin == GPIO_PIN_0)
+  {
+	  BaseType_t xCambiodeContexto = pdFALSE;
+
+	  // "Damos" el semáforo para avisar a la tarea
+	  xSemaphoreGiveFromISR(xSemaforoBoton, &xCambiodeContexto);
+
+	  // Forzamos al RTOS a evaluar si debe saltar directo a la tarea despertada
+	  portYIELD_FROM_ISR(xCambiodeContexto);
+  }
+}
+
+void vTareaPin(void * pvParameters)
+{
+	while(1)
+	{
+		if(xSemaphoreTake(xSemaforoBoton, portMAX_DELAY) == pdTRUE ) {
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+		}
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
   * @retval int
   */
-
-
-TaskHandle_t xTareaA_Handle = NULL;
-TaskHandle_t xTareaB_Handle = NULL;
-int checker = 0;
-
-void vAumentaPrioridad(void *pvParameters)
-{
-	UBaseType_t prioridadB = uxTaskPriorityGet(xTareaB_Handle);
-	vTaskPrioritySet(xTareaA_Handle, prioridadB + 1);
-	checker = 1;
-	vTaskDelay(pdMS_TO_TICKS(3000));
-	vTaskPrioritySet(xTareaA_Handle, prioridadB);
-	checker = 0;
-	vTaskDelete(NULL);
-}
-
-void vTareaA(void *pvParameters) {
-    while(1) {
-        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-        HAL_Delay(300);
-//        vTaskDelay(pdMS_TO_TICKS(300));
-    }
-}
-
-
-void vTareaB(void *pvParameters) {
-    while(1) {
-        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-        HAL_Delay(300);
-//        vTaskDelay(pdMS_TO_TICKS(300));
-    }
-}
-
-void vTareaPulsador(void *pvParameters){
-	while(1)
-	{
-		if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_SET && checker == 0) {
-			UBaseType_t prioridadB = uxTaskPriorityGet(xTareaB_Handle);
-			xTaskCreate(vAumentaPrioridad, "aumentador de prio", 100, NULL,prioridadB + 1 , NULL);
-		 }
-	}
-	vTaskDelay(pdMS_TO_TICKS(5));
-}
-
 int main(void)
 {
 
@@ -147,13 +128,10 @@ int main(void)
   /* Start scheduler */
 //  osKernelStart();
 
-  xTaskCreate(vTareaA, "tarea a", 100, NULL, 1, &xTareaA_Handle);
-  xTaskCreate(vTareaB, "tarea b", 100, NULL, 1, &xTareaB_Handle);
-  xTaskCreate(vTareaPulsador, "loop pulsador", 100, NULL, 1, NULL);
-
-  vTaskStartScheduler();
-
   /* We should never get here as control is now taken by the scheduler */
+  xSemaforoBoton = xSemaphoreCreateBinary();
+  xTaskCreate(vTareaPin, "Tarea Pin", 100, NULL, 1, NULL);
+  vTaskStartScheduler();
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -237,7 +215,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
