@@ -60,28 +60,59 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-SemaphoreHandle_t xSemaforoBoton; // Variable global
+SemaphoreHandle_t xSemaforoLed1;
+SemaphoreHandle_t xSemaforoLed2;
+SemaphoreHandle_t xSemaforoLed3;
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-  if(GPIO_Pin == GPIO_PIN_0)
-  {
-	  BaseType_t xCambiodeContexto = pdFALSE;
+//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+//{
+//  if(GPIO_Pin == GPIO_PIN_0)
+//  {
+//	  BaseType_t xCambiodeContexto = pdFALSE;
+//
+//	  // "Damos" el semáforo para avisar a la tarea
+//	  xSemaphoreGiveFromISR(xSemaforoBoton, &xCambiodeContexto);
+//
+//	  // Forzamos al RTOS a evaluar si debe saltar directo a la tarea despertada
+//	  portYIELD_FROM_ISR(xCambiodeContexto);
+//  }
+//}
 
-	  // "Damos" el semáforo para avisar a la tarea
-	  xSemaphoreGiveFromISR(xSemaforoBoton, &xCambiodeContexto);
-
-	  // Forzamos al RTOS a evaluar si debe saltar directo a la tarea despertada
-	  portYIELD_FROM_ISR(xCambiodeContexto);
-  }
-}
-
-void vTareaPin(void * pvParameters)
+void vTareaLed1(void * pvParameters)
 {
 	while(1)
 	{
-		if(xSemaphoreTake(xSemaforoBoton, portMAX_DELAY) == pdTRUE ) {
+		if(xSemaphoreTake(xSemaforoLed1, portMAX_DELAY) == pdTRUE ) {
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+			vTaskDelay(pdMS_TO_TICKS(500));
+			xSemaphoreGive(xSemaforoLed2);
+		}
+	}
+}
+
+void vTareaLed2(void * pvParameters)
+{
+	while(1)
+	{
+		if(xSemaphoreTake(xSemaforoLed2, portMAX_DELAY) == pdTRUE ) {
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			vTaskDelay(pdMS_TO_TICKS(500));
+			xSemaphoreGive(xSemaforoLed3);
+		}
+	}
+}
+
+void vTareaLed3(void * pvParameters)
+{
+	while(1)
+	{
+		if(xSemaphoreTake(xSemaforoLed3, portMAX_DELAY) == pdTRUE ) {
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+			vTaskDelay(pdMS_TO_TICKS(500));
+			xSemaphoreGive(xSemaforoLed1);
 		}
 	}
 }
@@ -129,9 +160,16 @@ int main(void)
 //  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
-  xSemaforoBoton = xSemaphoreCreateBinary();
-  xTaskCreate(vTareaPin, "Tarea Pin", 100, NULL, 1, NULL);
+  xSemaforoLed1 = xSemaphoreCreateBinary();
+  xSemaforoLed2 = xSemaphoreCreateBinary();
+  xSemaforoLed3 = xSemaphoreCreateBinary();
+  xTaskCreate(vTareaLed1, "Tarea Led 1", 100, NULL, 1, NULL);
+  xTaskCreate(vTareaLed2, "Tarea Led 2", 100, NULL, 1, NULL);
+  xTaskCreate(vTareaLed3, "Tarea Led 3", 100, NULL, 1, NULL);
+  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+  xSemaphoreGive(xSemaforoLed1);
   vTaskStartScheduler();
+
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
