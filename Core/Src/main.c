@@ -60,60 +60,81 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-SemaphoreHandle_t xSemaforoLed1;
-SemaphoreHandle_t xSemaforoLed2;
-SemaphoreHandle_t xSemaforoLed3;
+SemaphoreHandle_t xMutex;
 
-//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-//{
-//  if(GPIO_Pin == GPIO_PIN_0)
-//  {
-//	  BaseType_t xCambiodeContexto = pdFALSE;
-//
-//	  // "Damos" el semáforo para avisar a la tarea
-//	  xSemaphoreGiveFromISR(xSemaforoBoton, &xCambiodeContexto);
-//
-//	  // Forzamos al RTOS a evaluar si debe saltar directo a la tarea despertada
-//	  portYIELD_FROM_ISR(xCambiodeContexto);
-//  }
-//}
-
-void vTareaLed1(void * pvParameters)
+void vSec1(void * pvParameters)
 {
 	while(1)
 	{
-		if(xSemaphoreTake(xSemaforoLed1, portMAX_DELAY) == pdTRUE ) {
+		if(xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE)
+		{
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+			HAL_Delay(250);
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-			vTaskDelay(pdMS_TO_TICKS(500));
-			xSemaphoreGive(xSemaforoLed2);
+			HAL_Delay(250);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			HAL_Delay(250);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+			HAL_Delay(250);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+			xSemaphoreGive(xMutex);
 		}
+		vTaskDelay(pdMS_TO_TICKS(100));
 	}
 }
 
-void vTareaLed2(void * pvParameters)
+void vSec2(void * pvParamters)
 {
 	while(1)
 	{
-		if(xSemaphoreTake(xSemaforoLed2, portMAX_DELAY) == pdTRUE ) {
+		if(xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE)
+		{
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-			vTaskDelay(pdMS_TO_TICKS(500));
-			xSemaphoreGive(xSemaforoLed3);
-		}
-	}
-}
-
-void vTareaLed3(void * pvParameters)
-{
-	while(1)
-	{
-		if(xSemaphoreTake(xSemaforoLed3, portMAX_DELAY) == pdTRUE ) {
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+			HAL_Delay(250);
 			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-			vTaskDelay(pdMS_TO_TICKS(500));
-			xSemaphoreGive(xSemaforoLed1);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+			HAL_Delay(250);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+			HAL_Delay(250);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+			HAL_Delay(250);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+			HAL_Delay(250);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+			HAL_Delay(250);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+			HAL_Delay(250);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+
+			xSemaphoreGive(xMutex);
 		}
+		vTaskDelay(pdMS_TO_TICKS(100));
 	}
 }
 
@@ -160,14 +181,9 @@ int main(void)
 //  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
-  xSemaforoLed1 = xSemaphoreCreateBinary();
-  xSemaforoLed2 = xSemaphoreCreateBinary();
-  xSemaforoLed3 = xSemaphoreCreateBinary();
-  xTaskCreate(vTareaLed1, "Tarea Led 1", 100, NULL, 1, NULL);
-  xTaskCreate(vTareaLed2, "Tarea Led 2", 100, NULL, 1, NULL);
-  xTaskCreate(vTareaLed3, "Tarea Led 3", 100, NULL, 1, NULL);
-  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-  xSemaphoreGive(xSemaforoLed1);
+  xMutex = xSemaphoreCreateMutex();
+  xTaskCreate(vSec1, "Secuencia 1", 100, NULL, 1, NULL);
+  xTaskCreate(vSec2, "Secuencia 2", 100, NULL, 1, NULL);
   vTaskStartScheduler();
 
 
