@@ -60,81 +60,55 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-SemaphoreHandle_t xMutex;
+int static flag = 0;
 
-void vSec1(void * pvParameters)
+TaskHandle_t static id_tarea;
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	while(1)
-	{
-		if(xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE)
-		{
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-			HAL_Delay(250);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-			HAL_Delay(250);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-			HAL_Delay(250);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			HAL_Delay(250);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			xSemaphoreGive(xMutex);
-		}
-		vTaskDelay(pdMS_TO_TICKS(100));
+  if(GPIO_Pin == GPIO_PIN_0)
+  {
+	BaseType_t xYieldRequired = pdFALSE;
+	if(flag){
+//		vTaskResume(id_tarea);
+		xYieldRequired = xTaskResumeFromISR(id_tarea);
+		portYIELD_FROM_ISR(xYieldRequired)
+		flag = 0;
+	} else{
+//		vTaskSuspend(id_tarea);
+//		vTaskSuspendFromISR();
+		flag = 1;
+	}
+  }
+}
+
+void chequearTarea()
+{
+	if(flag == 1){
+		vTaskSuspend(id_tarea);
 	}
 }
 
-void vSec2(void * pvParamters)
+void vTareaLed(void * pvParametrs)
 {
 	while(1)
 	{
-		if(xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE)
-		{
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			HAL_Delay(250);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			HAL_Delay(250);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			HAL_Delay(250);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			HAL_Delay(250);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			HAL_Delay(250);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			HAL_Delay(250);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-			HAL_Delay(250);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-			HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-
-			xSemaphoreGive(xMutex);
-		}
-		vTaskDelay(pdMS_TO_TICKS(100));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+		chequearTarea();
+		vTaskDelay(pdMS_TO_TICKS(250));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+		chequearTarea();
+		vTaskDelay(pdMS_TO_TICKS(250));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+		chequearTarea();
+		vTaskDelay(pdMS_TO_TICKS(250));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		chequearTarea();
+		vTaskDelay(pdMS_TO_TICKS(250));
+		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
 	}
 }
 
@@ -181,9 +155,7 @@ int main(void)
 //  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
-  xMutex = xSemaphoreCreateMutex();
-  xTaskCreate(vSec1, "Secuencia 1", 100, NULL, 1, NULL);
-  xTaskCreate(vSec2, "Secuencia 2", 100, NULL, 1, NULL);
+  xTaskCreate(vTareaLed, "Secuencia Leds", 100, NULL, 1, &id_tarea);
   vTaskStartScheduler();
 
 

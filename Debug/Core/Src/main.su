@@ -1,6 +1,7 @@
-../Core/Src/main.c:65:6:vSec1	16	static
-../Core/Src/main.c:89:6:vSec2	16	static
-../Core/Src/main.c:147:5:main	16	static
-../Core/Src/main.c:205:6:SystemClock_Config	88	static
-../Core/Src/main.c:254:6:HAL_TIM_PeriodElapsedCallback	16	static
-../Core/Src/main.c:272:6:Error_Handler	4	static,ignoring_inline_asm
+../Core/Src/main.c:67:6:HAL_GPIO_EXTI_Callback	24	static,ignoring_inline_asm
+../Core/Src/main.c:85:6:chequearTarea	8	static
+../Core/Src/main.c:92:6:vTareaLed	16	static
+../Core/Src/main.c:121:5:main	16	static
+../Core/Src/main.c:177:6:SystemClock_Config	88	static
+../Core/Src/main.c:226:6:HAL_TIM_PeriodElapsedCallback	16	static
+../Core/Src/main.c:244:6:Error_Handler	4	static,ignoring_inline_asm
