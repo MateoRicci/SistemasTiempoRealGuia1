@@ -60,56 +60,27 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-int static flag = 0;
-
-TaskHandle_t static id_tarea;
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-  if(GPIO_Pin == GPIO_PIN_0)
-  {
-	BaseType_t xYieldRequired = pdFALSE;
-	if(flag){
-//		vTaskResume(id_tarea);
-		xYieldRequired = xTaskResumeFromISR(id_tarea);
-		portYIELD_FROM_ISR(xYieldRequired)
-		flag = 0;
-	} else{
-//		vTaskSuspend(id_tarea);
-//		vTaskSuspendFromISR();
-		flag = 1;
-	}
-  }
-}
-
-void chequearTarea()
-{
-	if(flag == 1){
-		vTaskSuspend(id_tarea);
-	}
-}
-
 void vTareaLed(void * pvParametrs)
 {
-	while(1)
+	int i = 0;
+	while(i < 10)
 	{
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-		chequearTarea();
 		vTaskDelay(pdMS_TO_TICKS(250));
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-		chequearTarea();
 		vTaskDelay(pdMS_TO_TICKS(250));
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-		chequearTarea();
 		vTaskDelay(pdMS_TO_TICKS(250));
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-		chequearTarea();
 		vTaskDelay(pdMS_TO_TICKS(250));
 		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+		i++;
 	}
+	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+	vTaskDelete(NULL);
 }
 
 /* USER CODE END 0 */
@@ -155,7 +126,7 @@ int main(void)
 //  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
-  xTaskCreate(vTareaLed, "Secuencia Leds", 100, NULL, 1, &id_tarea);
+  xTaskCreate(vTareaLed, "Secuencia Leds", 100, NULL, 1, NULL);
   vTaskStartScheduler();
 
 

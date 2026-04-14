@@ -1,7 +1,5 @@
-../Core/Src/main.c:67:6:HAL_GPIO_EXTI_Callback	4
-../Core/Src/main.c:85:6:chequearTarea	2
-../Core/Src/main.c:92:6:vTareaLed	1
-../Core/Src/main.c:121:5:main	1
-../Core/Src/main.c:177:6:SystemClock_Config	3
-../Core/Src/main.c:226:6:HAL_TIM_PeriodElapsedCallback	2
-../Core/Src/main.c:244:6:Error_Handler	1
+../Core/Src/main.c:63:6:vTareaLed	2
+../Core/Src/main.c:92:5:main	1
+../Core/Src/main.c:148:6:SystemClock_Config	3
+../Core/Src/main.c:197:6:HAL_TIM_PeriodElapsedCallback	2
+../Core/Src/main.c:215:6:Error_Handler	1
