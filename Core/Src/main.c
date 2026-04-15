@@ -23,6 +23,7 @@
 #include "task.h"
 #include "gpio.h"
 #include "semphr.h"
+#include "queue.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -60,28 +61,47 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void vTareaLed(void * pvParametrs)
+static QueueHandle_t xLedQueue;
+
+
+void vQueueHandler(void * pvParameters)
 {
-	int i = 0;
-	while(i < 10)
+	typeof(GPIO_PIN_12) val;
+	while(1)
 	{
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-		vTaskDelay(pdMS_TO_TICKS(250));
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-		vTaskDelay(pdMS_TO_TICKS(250));
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-		vTaskDelay(pdMS_TO_TICKS(250));
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-		vTaskDelay(pdMS_TO_TICKS(250));
-		HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-		i++;
+
+		if(xQueueReceive(xLedQueue, &val, portMAX_DELAY) == pdPASS)
+		{
+			HAL_GPIO_TogglePin(GPIOD, val);
+		}
 	}
-	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-	vTaskDelete(NULL);
 }
+
+void  vSenderTask(void * pvParameters)
+{
+	typeof(GPIO_PIN_12) pin1 = GPIO_PIN_12;
+	typeof(GPIO_PIN_13) pin2 = GPIO_PIN_13;
+//	typeof(GPIO_PIN_14) pin3 = GPIO_PIN_14;
+//	typeof(GPIO_PIN_15) pin4 = GPIO_PIN_15;
+	while(1)
+	{
+		xQueueSend(xLedQueue, &pin1, 0);
+		vTaskDelay(pdMS_TO_TICKS(200));
+		xQueueSend(xLedQueue, &pin1, 0);
+		vTaskDelay(pdMS_TO_TICKS(200));
+		xQueueSend(xLedQueue, &pin1, 0);
+		xQueueSend(xLedQueue, &pin2, 0);
+		vTaskDelay(pdMS_TO_TICKS(200));
+		xQueueSend(xLedQueue, &pin1, 0);
+		vTaskDelay(pdMS_TO_TICKS(200));
+		xQueueSend(xLedQueue, &pin1, 0);
+		xQueueSend(xLedQueue, &pin2, 0);
+		vTaskDelay(pdMS_TO_TICKS(200));
+	}
+}
+
+
+
 
 /* USER CODE END 0 */
 
@@ -124,9 +144,10 @@ int main(void)
 
   /* Start scheduler */
 //  osKernelStart();
-
+  xLedQueue = xQueueCreate(5, sizeof(typeof(GPIO_PIN_12)));
+  xTaskCreate(vQueueHandler, "Control", 128, NULL, 1, NULL);
+  xTaskCreate(vSenderTask, "Sender", 128, NULL, 1, NULL);
   /* We should never get here as control is now taken by the scheduler */
-  xTaskCreate(vTareaLed, "Secuencia Leds", 100, NULL, 1, NULL);
   vTaskStartScheduler();
 
 
